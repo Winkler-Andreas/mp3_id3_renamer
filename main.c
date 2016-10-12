@@ -31,6 +31,17 @@ int main()
   NEWFILE *filelist_start = file_array;
   NEWFILE *error_files;
 
+  printf("*******************************************************\n");
+  printf("MAKE SURE THAT THERE ARE ___ONLY___ FILES IN THE FOLDER\n");
+  printf("*******************************************************\n\n");
+  printf("*******************************************************\n");
+  printf("MAKE SURE THAT THERE ARE ___ONLY___ FILES IN THE FOLDER\n");
+  printf("*******************************************************\n\n");
+  printf("*******************************************************\n");
+  printf("MAKE SURE THAT THERE ARE ___ONLY___ FILES IN THE FOLDER\n");
+  printf("*******************************************************\n\n");
+
+
   printf("> Following files are available in the current folder:\n");
   while(file_array->next != NULL)
   {
@@ -39,7 +50,7 @@ int main()
   }
 
   printf("\n> Scanning files for mp3s.\n");
-  error_files = file_checker(filelist_start);
+ // error_files = file_checker(filelist_start);
 
   return 0;
 }
@@ -50,6 +61,9 @@ NEWFILE * filelist_creation(NEWFILE *file_array_f)
 {
   file_array_f = malloc(sizeof(NEWFILE));
   NEWFILE *array_start = file_array_f;
+
+  FILE *rm;
+  char buf[4];
 
 
     struct dirent *de;  // Pointer for directory entry
@@ -62,28 +76,50 @@ NEWFILE * filelist_creation(NEWFILE *file_array_f)
         printf("Could not open current directory" );
         return 0;
     }
-
-
-    while ((de = readdir(dr)) != NULL)  // Refer http://pubs.opengroup.org/onlinepubs/7990989775/xsh/readdir.html
+    else
     {
-      #ifdef NIX
-      if(de->d_type == 8) // not working with windows
-      #endif
+      while ((de = readdir(dr)) != NULL)  // Refer http://pubs.opengroup.org/onlinepubs/7990989775/xsh/readdir.html
       {
-        if(strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, ".") == 0) continue; // excluding . and ..
+        #ifdef NIX
+        if(de->d_type == 8) // not working with windows
+        #endif
+        {
+          if(strcmp(de->d_name, "..") == 0 || strcmp(de->d_name, ".") == 0) continue; // excluding . and ..
 
-        strcpy(file_array_f->filename, de->d_name);
-        //  printf("%i\n", de->d_type);
-        file_array_f->next = malloc(sizeof(NEWFILE));
-        file_array_f = file_array_f->next;
+
+          rm = fopen(de->d_name, "r");
+          //printf("Checking file \"%s\":\n",de->d_name);
+          if (rm != NULL)
+          {
+            fread(buf, 1, 4, rm);
+            buf[(sizeof buf)-1] = 0;
+            fclose(rm);
+
+            if(strcmp(buf, "ID3") != 0)
+            {
+              if(debug == 1) printf("DEBUG: X File %s: NOT added to the list.\n", de->d_name);
+              continue;
+              /*
+              search for MP3 Frame header to check if it is an MP3 file.
+              if(es ist keine MP3) continue; //ansonsten wird es in der Liste aufgenommen.
+              */
+            }
+
+          }
+          if(debug == 1) printf("DEBUG: OK File %s: identified as MP3 -> added to the list.\n", de->d_name);
+          strcpy(file_array_f->filename, de->d_name);
+          #ifdef NIX
+          printf("%i\n", de->d_type);
+          #endif
+          file_array_f->next = malloc(sizeof(NEWFILE));
+          file_array_f = file_array_f->next;
+        }
       }
+      file_array_f->next=NULL;
+      //file_array_f = array_start;
+      closedir(dr);
     }
-
-
-    file_array_f = array_start;
-
-    closedir(dr);
-
+  printf("\n\n");
   return array_start;
 }
 

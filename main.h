@@ -6,5 +6,6 @@
     struct NEWFILE *next;
   }NEWFILE;
 
+  unsigned char debug = 1;
 
 #endif // MAIN_H_INCLUDED
